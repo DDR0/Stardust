@@ -1,0 +1,27 @@
+body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	background: #f5ede4;
+	margin: 0;
+	box-sizing: border-box;
+	border: 5vmin double #211;
+}
+
+h1 sup {
+	font-family: cursive;
+	font-size: 40%;
+	transform: translate(25px, -12px) rotate(-27deg);
+	display: -webkit-inline-box;
+	margin-left: -5ex;
+}
+
+canvas.main {
+	resize: both;
+}
+
+p {
+	margin: 0.8ex;
+}
