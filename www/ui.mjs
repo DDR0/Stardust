@@ -8,6 +8,7 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	let selectedTool = $('.toolbox [name=tool]:checked').value
 	let toolRadius = 10 //particles
 	
+	let updateCanvasRendering = console.error.bind(0, 'unset')
 	
 	// Canvas resizing.
 	new ResizeObserver(([{target: canvas}]) => {
@@ -38,12 +39,47 @@ export const bindWorldToDisplay = (world, display, draw) => {
 		function updateCanvasSize() {
 			//canvas.width = 3;
 			//canvas.height = 4;
-			console.log(`canvas resized to ${canvas.width}×${canvas.height} – TODO: copy pixel data here.`)
+			console.log(`Canvas resized to ${canvas.width}×${canvas.height} – TODO: copy pixel data upon resize here.`)
 			
 			world.bounds.x[0] = canvas.width;
 			world.bounds.y[0] = canvas.height;
+			
+			updateCanvasRendering()
 		}
 	}).observe(mainCanvas)
+	
+	
+	//The renderer takes particle data and puts in on the canvas.
+	//Some jiggery-pokery to putImageData while allocating as few things as possible.
+	//We do need to copy the world.particles.rgba because it's backed by a SharedArrayBuffer,
+	//and ImageData requires arrays with *non-shared*, *non-resizable* buffers.
+	//Note: createImageBitmap() goes the opposite way we want, we already have the data.
+	{
+		const context = mainCanvas.getContext('2d')
+		
+		let width = 1, height = 1
+		let inputArray = new Uint8ClampedArray(4)
+		let outputArray = new Uint8ClampedArray(4)
+		let then = performance.now()
+		
+		updateCanvasRendering = () => {
+			({width, height} = mainCanvas)
+			inputArray = world.particles.rgba.subarray(0, 4*width*height)
+			outputArray = new Uint8ClampedArray(4*width*height)
+		}
+		
+		const drawFrame = now => {
+			outputArray.set(inputArray)
+			context.putImageData(new ImageData(outputArray, width, height), 0,0)
+			requestAnimationFrame(drawFrame)
+			
+			//console.debug(`frame delta: ${(now-then).toFixed(2)}µs`)
+			then = now
+		}
+		drawFrame(then)
+	}
+
+	console.info('Started frame render.')
 	
 	
 	// Toolbox logic.

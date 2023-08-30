@@ -191,39 +191,7 @@ renderCore.postMessage({type:'hello', data:[]})
 renderCore.postMessage({type:'bindToData', data:[world]})
 console.info(`Loaded render core.`)
 
-//Some jiggery-pokery to putImageData while allocating as few things as possible.
-//We do need to copy the world.particles.rgba because it's backed by a SharedArrayBuffer,
-//and ImageData requires arrays with non-shared, non-resizable buffers.
-//Note: createImageBitmap() goes the opposite way we want, we already have the data.
-{
-	const context = $("canvas.main").getContext('2d')
-	const canvas = context.canvas
-	let width = 0, height = 0
-	let inputArray = new Uint8ClampedArray(0)
-	let outputArray = new Uint8ClampedArray(0)
-	let then = performance.now()
-	
-	function drawFrame(now) {
-		if (canvas.width != width || canvas.height != height) {
-			({width, height} = canvas)
-			inputArray = world.particles.rgba.subarray(0, 4*width*height)
-			outputArray = new Uint8ClampedArray(4*width*height)
-		}
-		
-		outputArray.set(inputArray)
-		context.putImageData(
-			new ImageData(outputArray, canvas.width, canvas.height),
-			0,0
-		)
-		requestAnimationFrame(drawFrame)
-		
-		//console.debug(`frame delta: ${(now-then).toFixed(2)}µs`)
-		then = now
-	}
-	drawFrame(then)
-}
 
-console.info('Started frame render.')
 
 bindWorldToDisplay(world, gameDisplay, {
 	dot:  (...args) => renderCore.postMessage({type:'drawDot',  data:args}),
