@@ -78,6 +78,7 @@ window.world = world //Enable easy script access for debugging.
 
 Array.prototype.fill.call(world.wrappingBehaviour, 1) //0 is air, 1 is wall. Default to wall. See particles.rs:hydrate_with_data() for the full list.
 
+world.particles.rgba.set([255,0,0,255, 0,255,0,255, 0,0,255,255, 0,0,0,255])
 
 ///////////////////////
 //  Set up workers.  //
@@ -139,8 +140,7 @@ const pendingRenderCore = new Promise(resolve => {
 				...callbacks.ok,
 				ready: ()=>{
 					resolve(worker)
-				},
-				drawFrame,
+				}
 			},
 		}
 	)
@@ -189,41 +189,41 @@ if (!logicCores.length) {
 const renderCore = await pendingRenderCore
 renderCore.postMessage({type:'hello', data:[]})
 renderCore.postMessage({type:'bindToData', data:[world]})
+console.info(`Loaded render core.`)
 
-//Rendering works by passing around a typed array buffer, so that we can render
-//the particles in a worker and then efficiently draw the resulting image in the
-//main thread.
-
-drawFrame.context = $("canvas.main").getContext('2d')
-function drawFrame(buffer, width, height) {
-	//If we save the ImageData after transferring the backing array buffer out, transferring the buffer back to this thread doesn't "put it back" into the ImageData's buffer. And since we can't assign it to buffer, we have to recreate the object. Seems fairly light-weight, at least, since we can create the new object with the old buffer.
-	//Anyway, first step, we draw the image data. This way, we don't drop frames when we're resizing, even if we do lag a bit.
-	drawFrame.context.putImageData(new ImageData(new Uint8ClampedArray(buffer), width, height), 0, 0);
+//Some jiggery-pokery to putImageData while allocating as few things as possible.
+//We do need to copy the world.particles.rgba because it's backed by a SharedArrayBuffer,
+//and ImageData requires arrays with non-shared, non-resizable buffers.
+//Note: createImageBitmap() goes the opposite way we want, we already have the data.
+{
+	const context = $("canvas.main").getContext('2d')
+	const canvas = context.canvas
+	let width = 0, height = 0
+	let inputArray = new Uint8ClampedArray(0)
+	let outputArray = new Uint8ClampedArray(0)
+	let then = performance.now()
 	
-	//Regenereate the buffer here if our canvas has changed size. We could use a ResizeObserver, but we'd have to check here anyway since we never *store* the buffer in a permanent variable - it only ever lives in function args, since ownership is passed around between the main and render threads.
-	const canvas = drawFrame.context.canvas;
-	if (canvas.width != width || canvas.height != height) {
-		({width, height} = canvas)
-		buffer = new ArrayBuffer(4*width*height)
-	}
-	
-	//I'm not sure about the placement of this RAF - should we kick off rendering at the end of the current frame and draw it immediately on the next, as opposed to kicking off the render and hoping it returns before the next frame? I think we could also put it in the web-worker, but that wouldn't really help us here.
-	requestAnimationFrame(() => {
-		renderCore.postMessage(
-			{ type: 'renderInto', data: [buffer, width, height] },
-			[ buffer ],
-		)
-		
-		if (buffer.byteLength && !drawFrame.hasThrownTransferError) {
-			drawFrame.hasThrownTransferError = true
-			console.error('Failed to transfer image data, falling back to expensive copy operation.')
+	function drawFrame(now) {
+		if (canvas.width != width || canvas.height != height) {
+			({width, height} = canvas)
+			inputArray = world.particles.rgba.subarray(0, 4*width*height)
+			outputArray = new Uint8ClampedArray(4*width*height)
 		}
-	})
+		
+		outputArray.set(inputArray)
+		context.putImageData(
+			new ImageData(outputArray, canvas.width, canvas.height),
+			0,0
+		)
+		requestAnimationFrame(drawFrame)
+		
+		//console.debug(`frame delta: ${(now-then).toFixed(2)}µs`)
+		then = now
+	}
+	drawFrame(then)
 }
 
-drawFrame(new ArrayBuffer(4), 1, 1) //Kick off the render loop.
-
-console.info(`Loaded render core.`)
+console.info('Started frame render.')
 
 bindWorldToDisplay(world, gameDisplay, {
 	dot:  (...args) => renderCore.postMessage({type:'drawDot',  data:args}),

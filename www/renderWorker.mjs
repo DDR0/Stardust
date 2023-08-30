@@ -14,10 +14,6 @@ const callbacks = Object.freeze({
 		world = new_world
 	},
 	
-	renderFrame: () => {
-		console.log('render frame')
-	},
-	
 	drawDot: (x, y, toolRadius, typeID) => {
 		//wasm.reset_to_type(world, thisWorkerID, x, y, typeID)
 	},
