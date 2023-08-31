@@ -8,7 +8,7 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	let selectedTool = $('.toolbox [name=tool]:checked').value
 	let toolRadius = 10 //particles
 	
-	let updateCanvasRendering = console.error.bind(0, 'unset')
+	let updateCanvasRenderer = console.error.bind(0, 'unset')
 	
 	// Canvas resizing.
 	new ResizeObserver(([{target: canvas}]) => {
@@ -44,7 +44,7 @@ export const bindWorldToDisplay = (world, display, draw) => {
 			world.bounds.x[0] = canvas.width;
 			world.bounds.y[0] = canvas.height;
 			
-			updateCanvasRendering()
+			updateCanvasRenderer()
 		}
 	}).observe(mainCanvas)
 	
@@ -57,23 +57,23 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	{
 		const context = mainCanvas.getContext('2d')
 		
-		let width = 1, height = 1
-		let inputArray = new Uint8ClampedArray(4)
-		let outputArray = new Uint8ClampedArray(4)
+		let width, height
+		let inputArray, outputArray, imageData
 		let then = performance.now()
 		
-		updateCanvasRendering = () => {
+		updateCanvasRenderer = () => {
 			({width, height} = mainCanvas)
-			inputArray = world.particles.rgba.subarray(0, 4*width*height)
+			inputArray = new Uint8ClampedArray(world.particles.rgba.buffer, 0, 4*width*height)
 			outputArray = new Uint8ClampedArray(4*width*height)
+			imageData = new ImageData(outputArray, width, height)
 		}
+		updateCanvasRenderer()
 		
 		const drawFrame = now => {
 			outputArray.set(inputArray)
-			context.putImageData(new ImageData(outputArray, width, height), 0,0)
+			context.putImageData(imageData, 0,0)
 			requestAnimationFrame(drawFrame)
 			
-			//console.debug(`frame delta: ${(now-then).toFixed(2)}µs`)
 			then = now
 		}
 		drawFrame(then)
