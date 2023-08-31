@@ -57,23 +57,27 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	{
 		const context = mainCanvas.getContext('2d')
 		
-		let width, height
 		let inputArray, outputArray, imageData
 		let then = performance.now()
 		
 		updateCanvasRenderer = () => {
-			({width, height} = mainCanvas)
+			const {width, height} = mainCanvas
+			//Create a new array of right length, but with a `SharedArrayBuffer` backing it.
 			inputArray = new Uint8ClampedArray(world.particles.rgba.buffer, 0, 4*width*height)
-			outputArray = new Uint8ClampedArray(4*width*height)
+			//Create a new array with a non-shared, non-resizable `ArrayBuffer` backing it.
+			outputArray = new Uint8ClampedArray(inputArray.length)
+			//`imageData` sees updates to the `outputArray` data.
 			imageData = new ImageData(outputArray, width, height)
 		}
 		updateCanvasRenderer()
+		
+		//console.debug(`frame delta: ${(now-then).toFixed(2)}µs`)
+		//world.particles.rgba[(Math.random()*imageData.width*imageData.height)|0] = 0x77FF00FF
 		
 		const drawFrame = now => {
 			outputArray.set(inputArray)
 			context.putImageData(imageData, 0,0)
 			requestAnimationFrame(drawFrame)
-			
 			then = now
 		}
 		drawFrame(then)
