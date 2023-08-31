@@ -10,6 +10,9 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	
 	let updateCanvasRenderer = console.error.bind(0, 'unset')
 	
+	mainCanvas.addEventListener("contextlost", console.warn)
+	mainCanvas.addEventListener("contextrestored", console.warn)
+	
 	// Canvas resizing.
 	new ResizeObserver(([{target: canvas}]) => {
 		const lockAttempts = 200;
@@ -56,7 +59,6 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	//Note: createImageBitmap() goes the opposite way we want, we already have the data.
 	{
 		const context = mainCanvas.getContext('2d')
-		
 		let inputArray, outputArray, imageData
 		let then = performance.now()
 		
