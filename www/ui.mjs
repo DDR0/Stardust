@@ -58,7 +58,12 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	//and ImageData requires arrays with *non-shared*, *non-resizable* buffers.
 	//Note: createImageBitmap() goes the opposite way we want, we already have the data.
 	{
-		const context = mainCanvas.getContext('2d')
+		const context = mainCanvas.getContext('2d', {
+			alpha: false, 
+			desynchronized: true, //set to false if tearing is an issue, should just be speedier for us though 
+			colorSpace: 'display-p3', 
+			willReadFrequently: false,
+		})
 		let inputArray, outputArray, imageData
 		let then = performance.now()
 		
