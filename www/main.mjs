@@ -91,10 +91,6 @@ const callbacks = { ok: Object.create(null), err: Object.create(null) } //Defaul
 callbacks.ok.hello = pong
 //callbacks.ok.update = graphUi.repaint
 callbacks.ok.pong = pong
-callbacks.ok.reload = ()=>{
-	console.info('Reload requested from worker.')
-	window.location.reload()
-}
 
 
 //Wrap a worker for our error-handling callback style, ie, callbacks.ok.whatever = ()=>{}.
