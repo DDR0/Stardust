@@ -20,6 +20,9 @@ h1 sup {
 
 canvas.main {
 	resize: both;
+	width: 600px;
+	height: 300px;
+	image-rendering: pixelated;
 }
 
 p {
