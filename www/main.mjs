@@ -38,7 +38,7 @@ const renderBuffer = new Uint8Array(new SharedArrayBuffer(totalPixels * Uint8Arr
 const world = Object.freeze({
 	__proto__: null,
 	lock:              new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)), //Global lock for all world data, so we can resize the world. Also acts as a "pause" button. Bool, but atomic operations like i32.
-	tick:              new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)), //Current global tick.
+	tick:              new BigInt64Array(new SharedArrayBuffer(1 * BigInt64Array.BYTES_PER_ELEMENT)), //Current global tick.
 	
 	workersRunning:    new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)), //Used by workers, last one to finish increments tick.
 	
@@ -78,8 +78,8 @@ window.world = world //Enable easy script access for debugging.
 
 Array.prototype.fill.call(world.wrappingBehaviour, 1) //0 is air, 1 is wall. Default to wall. See particles.rs:hydrate_with_data() for the full list.
 
-new Uint8ClampedArray(world.particles.rgba.buffer, 0, 100)
-	.set([255,0,0,255, 0,255,0,255, 0,0,255,255, 0,0,0,255])
+//new Uint8ClampedArray(world.particles.rgba.buffer, 0, 100)
+//	.set([255,0,0,255, 0,255,0,255, 0,0,255,255, 0,0,0,255])
 
 ///////////////////////
 //  Set up workers.  //
@@ -171,8 +171,8 @@ if (!logicCores.length) {
 
 //Poke shared memory worker threads are waiting on, once per frame.
 (function advanceTick() {
-	if (!Atomics.load(world.workersRunning, 0)) { 
-		Atomics.add(world.tick, 0, 1)
+	if (Atomics.compareExchange(world.workersRunning, 0, 0, availableCores) === 0) {
+		Atomics.add(world.tick, 0, 1n)
 		Atomics.notify(world.tick, 0)
 		//console.log('incremented frame')
 	} else {

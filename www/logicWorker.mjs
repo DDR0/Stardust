@@ -80,7 +80,7 @@ function processFrame() {
 	// 2. Can we do any move?
 	
 	while (1) {
-		didProcessParticle |= 1 //wasm.process_particle(world, thisWorkerID, x, y) //don't forget to pass in time_delta
+		didProcessParticle |= processParticle(world, thisWorkerID, x, y) //Don't forget time_delta!
 		
 		//Check if we're at bounds.
 		if (x + delta < 0 || x + delta >= worldX) { //OK, we're off the end of a row.
@@ -108,7 +108,7 @@ function processFrame() {
 	Atomics.sub(world.workersRunning, 0, 1)
 	
 	//Iterate only once, for testing purposes.
-	return
+	//return
 	
 	//console.log(`#${thisWorkerID} done tick ${currentTick}`)
 	if (Atomics.waitAsync) {
