@@ -1,5 +1,3 @@
-(async ()=>{ //shim file not getting loaded as a javascript module
-
 const thisWorkerID = -2 //-2 for render worker, -1 for main thread, 0 for unclaimed, ≥1 for logic workers
 let world
 
@@ -36,6 +34,3 @@ addEventListener("message", ({'data': {type, data}}) => {
 })
 
 postMessage({ type:'ready' }) //Let the main thread know this worker is up, ready to receive data.
-
-
-})() //end shim

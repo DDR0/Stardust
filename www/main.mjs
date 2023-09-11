@@ -113,7 +113,11 @@ function wrapForCallbacks(worker, callbacks) {
 const pendingLogicCores = Array(availableCores).fill().map((_,i)=>{
 	return new Promise(resolve => {
 		const worker = wrapForCallbacks(
-			new Worker('logicWorker.mjs'),
+			new Worker('logicWorker.mjs', {
+				type: 'module',
+				credentials: 'omit',
+				name: `Logic Worker ${i}`
+			}),
 			{
 				err: { ...callbacks.err }, 
 				ok: {
@@ -130,7 +134,11 @@ const pendingLogicCores = Array(availableCores).fill().map((_,i)=>{
 
 const pendingRenderCore = new Promise(resolve => {
 	const worker = wrapForCallbacks(
-		new Worker('renderWorker.mjs'),
+		new Worker('renderWorker.mjs', {
+				type: 'module',
+				credentials: 'omit',
+				name: 'Render Worker 1'
+			}),
 		{
 			err: { ...callbacks.err }, 
 			ok: {
