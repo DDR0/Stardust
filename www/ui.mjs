@@ -54,7 +54,7 @@ export const bindWorldToDisplay = (world, display, draw) => {
 	
 	//The renderer takes particle data and puts in on the canvas.
 	//Some jiggery-pokery to putImageData while allocating as few things as possible.
-	//We do need to copy the world.particles.rgba because it's backed by a SharedArrayBuffer,
+	//We do need to copy the world.particles.abgr because it's backed by a SharedArrayBuffer,
 	//and ImageData requires arrays with *non-shared*, *non-resizable* buffers.
 	//Note: createImageBitmap() goes the opposite way we want, we already have the data.
 	{
@@ -70,7 +70,7 @@ export const bindWorldToDisplay = (world, display, draw) => {
 		updateCanvasRenderer = () => {
 			const {width, height} = mainCanvas
 			//Create a new array of right length, but with a `SharedArrayBuffer` backing it.
-			inputArray = new Uint8ClampedArray(world.particles.rgba.buffer, 0, 4*width*height)
+			inputArray = new Uint8ClampedArray(world.particles.abgr.buffer, 0, 4*width*height)
 			//Create a new array with a non-shared, non-resizable `ArrayBuffer` backing it.
 			outputArray = new Uint8ClampedArray(inputArray.length)
 			//`imageData` sees updates to the `outputArray` data.
@@ -79,7 +79,7 @@ export const bindWorldToDisplay = (world, display, draw) => {
 		updateCanvasRenderer()
 		
 		//console.debug(`frame delta: ${(now-then).toFixed(2)}µs`)
-		//world.particles.rgba[(Math.random()*imageData.width*imageData.height)|0] = 0x77FF00FF
+		//world.particles.abgr[(Math.random()*imageData.width*imageData.height)|0] = 0x77FF00FF
 		
 		const drawFrame = now => {
 			outputArray.set(inputArray)

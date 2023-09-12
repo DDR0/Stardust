@@ -1,4 +1,5 @@
 import {bindWorldToDisplay} from './ui.mjs'
+import {colour} from './colour.mjs'
 
 if (!window.SharedArrayBuffer) {
 	document.body.innerHTML = `
@@ -37,6 +38,7 @@ const renderBuffer = new Uint8Array(new SharedArrayBuffer(totalPixels * Uint8Arr
 //Could use a double-buffer system, but we would have to copy everything from one buffer to the other each frame. Benefit: no tearing.
 const world = Object.freeze({
 	__proto__: null,
+	version:           1,
 	lock:              new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)), //Global lock for all world data, so we can resize the world. Also acts as a "pause" button. Bool, but atomic operations like i32.
 	tick:              new BigInt64Array(new SharedArrayBuffer(1 * BigInt64Array.BYTES_PER_ELEMENT)), //Current global tick.
 	
@@ -53,10 +55,8 @@ const world = Object.freeze({
 		__proto__: null,
 		lock:        new Int32Array    (new SharedArrayBuffer(totalPixels * Int32Array.    BYTES_PER_ELEMENT)), //Is this particle locked for processing? 0=no, >0 = logic worker, -1 = main thread, -2 = render worker
 		type:        new Uint8Array    (new SharedArrayBuffer(totalPixels * Uint8Array.    BYTES_PER_ELEMENT)),
-		tick:        new Uint8Array    (new SharedArrayBuffer(totalPixels * Uint8Array.    BYTES_PER_ELEMENT)), //Used for is_new_tick. Stores whether last tick processed was even or odd. If this doesn't match the current tick, we know to advance the particle simulation one step.
-		stage:       new Uint8Array    (new SharedArrayBuffer(totalPixels * Uint8Array.    BYTES_PER_ELEMENT)), //Particle processing step. Usually 0 = hasn't moved yet, 1 = can't move, >2 = done.
 		initiative:  new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)), //Faster particles get more initiative to spend moving around.
-		rgba:        new Uint32Array   (new SharedArrayBuffer(totalPixels * Uint32Array.   BYTES_PER_ELEMENT)),
+		abgr:        new Uint32Array   (new SharedArrayBuffer(totalPixels * Uint32Array.   BYTES_PER_ELEMENT)),
 		velocity: {
 			__proto__: null,
 			x:       new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)),
@@ -77,6 +77,10 @@ const world = Object.freeze({
 window.world = world //Enable easy script access for debugging.
 
 Array.prototype.fill.call(world.wrappingBehaviour, 1) //0 is air, 1 is wall. Default to wall. See particles.rs:hydrate_with_data() for the full list.
+
+world.particles.type[0] = 1
+world.particles.abgr[0] = colour(0x00FF0088)
+
 
 //new Uint8ClampedArray(world.particles.rgba.buffer, 0, 100)
 //	.set([255,0,0,255, 0,255,0,255, 0,0,255,255, 0,0,0,255])
