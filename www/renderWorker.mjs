@@ -1,21 +1,13 @@
+import {colour as flip} from './colour.mjs'
+
 const thisWorkerID = -2 //-2 for render worker, -1 for main thread, 0 for unclaimed, ≥1 for logic workers
 let world
 
-const callbacks = Object.freeze({
+const callbacks = {
 	__proto__: null,
-	
-	hello: () => {
-		console.log('render worker hello 1');
-	},
-	
-	bindToData: new_world => {
-		world = new_world
-	},
-	
-	drawDot: (x, y, toolRadius, typeID) => {
-		//wasm.reset_to_type(world, thisWorkerID, x, y, typeID)
-	},
-})
+	hello: ()=>{console.log('render worker hello')},
+	bindToData: new_world => {world = new_world},
+}
 
 addEventListener("message", ({'data': {type, data}}) => {
 	const callback = callbacks[type]
@@ -34,3 +26,10 @@ addEventListener("message", ({'data': {type, data}}) => {
 })
 
 postMessage({ type:'ready' }) //Let the main thread know this worker is up, ready to receive data.
+
+const i = (x,y) => x + y * world.bounds.x[0]
+
+callbacks['drawTest'] = (x,y) => {
+	world.particles.type[i(x,y)] = 1
+	world.particles.abgr[i(x,y)] = flip(0x00FF0044)
+}

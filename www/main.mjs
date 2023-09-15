@@ -1,5 +1,4 @@
 import {bindWorldToDisplay} from './ui.mjs'
-import {colour} from './colour.mjs'
 
 if (!window.SharedArrayBuffer) {
 	document.body.innerHTML = `
@@ -78,12 +77,7 @@ window.world = world //Enable easy script access for debugging.
 
 Array.prototype.fill.call(world.wrappingBehaviour, 1) //0 is air, 1 is wall. Default to wall. See particles.rs:hydrate_with_data() for the full list.
 
-world.particles.type[0] = 1
-world.particles.abgr[0] = colour(0x00FF0088)
 
-
-//new Uint8ClampedArray(world.particles.rgba.buffer, 0, 100)
-//	.set([255,0,0,255, 0,255,0,255, 0,0,255,255, 0,0,0,255])
 
 ///////////////////////
 //  Set up workers.  //
@@ -207,6 +201,7 @@ bindWorldToDisplay(world, gameDisplay, {
 	line: (...args) => renderCore.postMessage({type:'drawLine', data:args}),
 	rect: (...args) => renderCore.postMessage({type:'drawRect', data:args}),
 	fill: (...args) => renderCore.postMessage({type:'drawFill', data:args}),
+	test: (...args) => renderCore.postMessage({type:'drawTest', data:args}),
 })
 
 console.info('Bound UI elements.')

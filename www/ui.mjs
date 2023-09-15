@@ -48,6 +48,8 @@ export const bindWorldToDisplay = (world, display, draw) => {
 			world.bounds.y[0] = canvas.height;
 			
 			updateCanvasRenderer()
+			
+			draw.test(100, 50)
 		}
 	}).observe(mainCanvas)
 	
