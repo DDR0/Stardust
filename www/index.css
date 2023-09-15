@@ -1,13 +1,28 @@
+html {
+	--wine: hsla(343, 44%, 25%, 1);
+	--white-smoke: hsla(15, 20%, 96%, 1);
+	--walnut-brown: hsla(15, 8%, 31%, 1);
+	--vermilion: hsla(5, 88%, 57%, 1);
+	--cornell-red: hsla(359, 75%, 42%, 1);
+}
+
 body {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	min-height: 100vh;
-	background: #f5ede4;
+	background: var(--white-smoke);
 	margin: 0;
 	box-sizing: border-box;
-	border: 5vmin double #211;
+	border: 1vmin solid var(--wine);
+	color: var(--walnut-brown);
+}
+
+a {
+	color: var(--cornell-red);
+	&:visited { color: var(--wine); }
+	&:active { color: var(--vermilion); }
 }
 
 h1 sup {
