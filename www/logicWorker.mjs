@@ -1,4 +1,5 @@
-import {processParticle} from './logic.mjs'
+import {colour as flip} from './colour.mjs'
+import {processParticle} from './particles.mjs'
 
 const requestFramerateCallback = self.requestAnimationFrame ?? (cb=>setTimeout(cb, 16)) //16ms: Default to a 60fps timeout if we can't hook into the animation callback.
 const cancelFramerateCallback = self.cancelAnimationFrame ?? clearTimeout

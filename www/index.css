@@ -38,6 +38,7 @@ canvas.main {
 	width: 600px;
 	height: 300px;
 	image-rendering: pixelated;
+	cursor: crosshair;
 }
 
 p {

@@ -1,4 +1,5 @@
 import {colour as flip} from './colour.mjs'
+import {summonParticle} from './particles.mjs'
 
 const thisWorkerID = -2 //-2 for render worker, -1 for main thread, 0 for unclaimed, ≥1 for logic workers
 let world
@@ -27,9 +28,11 @@ addEventListener("message", ({'data': {type, data}}) => {
 
 postMessage({ type:'ready' }) //Let the main thread know this worker is up, ready to receive data.
 
-const i = (x,y) => x + y * world.bounds.x[0]
+
 
 callbacks['drawTest'] = (x,y) => {
-	world.particles.type[i(x,y)] = 1
-	world.particles.abgr[i(x,y)] = flip(0x00FF0044)
+	summonParticle(world, 2, x, y)
+}
+callbacks['drawDot'] = (x,y, radius, id) => {
+	summonParticle(world, id, x, y) //todo: radius, also locking
 }

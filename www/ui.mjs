@@ -83,6 +83,8 @@ export const bindWorldToDisplay = (world, display, draw) => {
 		//console.debug(`frame delta: ${(now-then).toFixed(2)}µs`)
 		//world.particles.abgr[(Math.random()*imageData.width*imageData.height)|0] = 0x77FF00FF
 		
+		//context.clearRect(0,0, mainCanvas.width, mainCanvas.height)
+		
 		const drawFrame = now => {
 			outputArray.set(inputArray)
 			context.putImageData(imageData, 0,0)
@@ -122,10 +124,12 @@ export const bindWorldToDisplay = (world, display, draw) => {
 			if (!evt.buttons) { return };
 			
 			const clientRect = evt.target.getClientRects()[0]
-			const x1 = Math.round(evt.x - clientRect.x) 
-			const y1 = Math.round(evt.y - clientRect.y)
-			const x2 = x1 - evt.movementX;
-			const y2 = y1 - evt.movementY;
+			const scaleX = clientRect.width / mainCanvas.width
+			const scaleY = clientRect.height / mainCanvas.height
+			const x1 = Math.round((evt.x - clientRect.x) / scaleX)
+			const y1 = Math.round((evt.y - clientRect.y) / scaleY)
+			const x2 = x1 - Math.round(evt.movementX / scaleX)
+			const y2 = y1 - Math.round(evt.movementY / scaleY)
 			
 			switch (selectedTool) {
 				case "picker":
