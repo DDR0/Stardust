@@ -36,7 +36,7 @@ const particleData = Object.freeze({ //particle data
 	},
 })
 
-const indexOf = (world, x,y) => x + y * world.bounds.x[0]
+export const indexOf = (world, x,y) => x + y * world.bounds.x[0]
 
 const ADVANCED_GAME_STATE = { NO: 0, YES: 1 }
 
