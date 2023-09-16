@@ -13,8 +13,8 @@ const particleData = Object.freeze({ //particle data
 		colour: 0,
 		variation: 0,
 		mass: 1.293, //kg/m³,
-		create: ()=>{},
-		move: ()=>{},
+		create: ()=>{}, //*extra* create options
+		move: ()=>{}, //play a move, like, on a game-board
 	},
 	1: {
 		name: tr('wall'),
@@ -40,12 +40,18 @@ export const indexOf = (world, x,y) => x + y * world.bounds.x[0]
 
 const ADVANCED_GAME_STATE = { NO: 0, YES: 1 }
 
-//May lock additional particles as part of the processing.
+// Advance the state of a single particle.
+// Locks particle, and any sub-particles eventually involved in the interaction.
 export const processParticle = (world, workerID, x, y) => {
 	return ADVANCED_GAME_STATE.NO;
 }
 
-//Does not lock particle - this must be done beforehand, and undone afterhand.
+// Create a particle out of thin air.
+// Does not lock particle - this must be done beforehand, and undone afterhand.
+// This is because drawing, we generally want to draw all the particles in *at
+// the same time*. If we draw the top row, they could theoretically be simulated
+// and fall down to the next row we draw, then we draw in those on top, they
+// fall down, and at the end we're left with only one line of particles.
 export const summonParticle = (world, type, x, y) => {
 	const parts = world.particles
 	const part = particleData[type]

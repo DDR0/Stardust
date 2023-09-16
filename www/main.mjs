@@ -37,39 +37,38 @@ const renderBuffer = new Uint8Array(new SharedArrayBuffer(totalPixels * Uint8Arr
 //Could use a double-buffer system, but we would have to copy everything from one buffer to the other each frame. Benefit: no tearing.
 const world = Object.freeze({
 	__proto__: null,
-	version:           1,
-	lock:              new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)), //Global lock for all world data, so we can resize the world. Also acts as a "pause" button. Bool, but atomic operations like i32.
-	tick:              new BigInt64Array(new SharedArrayBuffer(1 * BigInt64Array.BYTES_PER_ELEMENT)), //Current global tick.
-	
-	workersRunning:    new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)), //Used by workers, last one to finish increments tick.
-	
+	lock:              new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)), //Global lock for all world data, so we can resize the world. Also acts as a "pause" button. Bool, but atomic operations like i32.
+	tick:              new BigInt64Array (new SharedArrayBuffer(1           * BigInt64Array .BYTES_PER_ELEMENT)), //Current global tick.
+	workersRunning:    new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)), //Used by workers, last one to finish increments tick.
+	 
 	bounds: Object.seal({ 
 		__proto__: null,
-		x:             new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)), 
-		y:             new Int32Array(new SharedArrayBuffer(1 * Int32Array.BYTES_PER_ELEMENT)),
+		x:             new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)), 
+		y:             new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)),
 	}),
-	wrappingBehaviour: new Uint8Array(new SharedArrayBuffer(4 * Uint8Array.BYTES_PER_ELEMENT)), //top, left, bottom, right: Set to particle type 0 or 1.
+	wrappingBehaviour: new Uint8Array  (new SharedArrayBuffer(4           * Uint8Array    .BYTES_PER_ELEMENT)), //top, left, bottom, right: Set to particle type 0 or 1.
 	
 	particles: Object.freeze({
 		__proto__: null,
-		lock:        new Int32Array    (new SharedArrayBuffer(totalPixels * Int32Array.    BYTES_PER_ELEMENT)), //Is this particle locked for processing? 0=no, >0 = logic worker, -1 = main thread, -2 = render worker
-		type:        new Uint8Array    (new SharedArrayBuffer(totalPixels * Uint8Array.    BYTES_PER_ELEMENT)),
-		initiative:  new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)), //Faster particles get more initiative to spend moving around.
-		abgr:        new Uint32Array   (new SharedArrayBuffer(totalPixels * Uint32Array.   BYTES_PER_ELEMENT)),
+		lock:          new Int32Array    (new SharedArrayBuffer(totalPixels * Int32Array    .BYTES_PER_ELEMENT)), //Is this particle locked for processing? 0=no, >0 = logic worker, -1 = main thread, -2 = render worker
+		type:          new Uint8Array    (new SharedArrayBuffer(totalPixels * Uint8Array    .BYTES_PER_ELEMENT)),
+		tick:          new BigInt64Array (new SharedArrayBuffer(totalPixels * BigInt64Array .BYTES_PER_ELEMENT)), //Last tick the particle was processed on. Used for refilling initiatiave.
+		initiative:    new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)), //Faster particles spend less initiative moving around. When a particle is out of initiatiave, it stops moving.
+		abgr:          new Uint32Array   (new SharedArrayBuffer(totalPixels * Uint32Array   .BYTES_PER_ELEMENT)),
 		velocity: Object.freeze({
 			__proto__: null,
-			x:       new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)),
-			y:       new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)),
+			x:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
+			y:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
 		}),
 		subpixelPosition: Object.freeze({ 
 			__proto__: null,
-			x:       new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)), //Position comes in through x/y coordinate on screen, but this does not capture subpixel position for slow-moving particles.
-			y:       new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)),
+			x:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)), //Position comes in through x/y coordinate on screen, but this does not capture subpixel position for slow-moving particles.
+			y:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
 		}),
-		mass:        new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)),
-		temperature: new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array.  BYTES_PER_ELEMENT)), //Kelvin
-		scratch1:    new BigUint64Array(new SharedArrayBuffer(totalPixels * BigUint64Array.BYTES_PER_ELEMENT)), //internal state for the particle
-		scratch2:    new BigUint64Array(new SharedArrayBuffer(totalPixels * BigUint64Array.BYTES_PER_ELEMENT)),
+		mass:          new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
+		temperature:   new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)), //Kelvin
+		scratch1:      new BigUint64Array(new SharedArrayBuffer(totalPixels * BigUint64Array.BYTES_PER_ELEMENT)), //internal state for the particle
+		scratch2:      new BigUint64Array(new SharedArrayBuffer(totalPixels * BigUint64Array.BYTES_PER_ELEMENT)),
 	})
 })
 

@@ -1,16 +1,7 @@
 import {colour as flip} from './colour.mjs'
 import {processParticle} from './particles.mjs'
 
-const requestFramerateCallback = self.requestAnimationFrame ?? (cb=>setTimeout(cb, 16)) //16ms: Default to a 60fps timeout if we can't hook into the animation callback.
-const cancelFramerateCallback = self.cancelAnimationFrame ?? clearTimeout
-if (!self.requestAnimationFrame) {
-	console.warn("requestAnimationFrame unavailable; falling back to setTimeout. Motion may be rougher.")
-}
-
-let thisWorkerIndex = 0
-let totalWorkers = 1
-let thisWorkerID = -1
-let world
+let thisWorkerIndex, totalWorkers, thisWorkerID, world
 
 const callbacks = Object.freeze({
 	__proto__: null,
@@ -74,7 +65,7 @@ function processFrame() {
 	const worldY = world.bounds.y[0];
 	let iterCounter = 1;
 	let didProcessParticle = 0;
-	const iterationLimit = 100;
+	const iterationLimit = 4;
 	
 	// The Two Stages of Particle Logic (each stage is resolved iteratively)
 	// 1. Can we do the move we would ideally like to?
@@ -86,7 +77,10 @@ function processFrame() {
 		//Check if we're at bounds.
 		if (x + delta < 0 || x + delta >= worldX) { //OK, we're off the end of a row.
 			if (y + delta < 0 || y + delta >= worldY) { //We're off the end of a column too.
-				if (iterCounter >= iterationLimit) break
+				if (iterCounter >= iterationLimit) {
+					console.warn(`Iteration limit ${iterationLimit} exceeded by ${thisWorkerID} at ${x},${y}.`)
+					break
+				}
 				if (!didProcessParticle) { //Nothing happened this iteration.
 					stage++
 					if (stage >= 1) {
