@@ -7,8 +7,12 @@ export const rng = Object.freeze((()=>{
 	return rng
 })())
 
+//export const hashLoc = (a,b,c) => n = ((x + y)*(x + y + 1)/2) + y + c
+
+/*
 for (let i = 0; i < 10; i++) {
 	rng.seed(i)
 	console.assert(rng(0, 2) >= 0 && rng(0, 2) < 2, `range out of range for seed ${i}`)
 	console.assert(rng.float() >= 0 && rng.float() < 1, `float out of range for seed ${i}`)
 }
+*/

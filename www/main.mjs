@@ -46,7 +46,7 @@ const world = Object.freeze({
 		x:             new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)), 
 		y:             new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)),
 	}),
-	wrappingBehaviour: new Uint8Array  (new SharedArrayBuffer(4           * Uint8Array    .BYTES_PER_ELEMENT)), //top, left, bottom, right: Set to particle type 0 or 1.
+	wrappingBehaviour: new Uint8Array    (new SharedArrayBuffer(4           * Uint8Array    .BYTES_PER_ELEMENT)), //top, left, bottom, right: Set to particle type 0 or 1.
 	
 	particles: Object.freeze({
 		__proto__: null,
@@ -176,7 +176,10 @@ if (!logicCores.length) {
 
 //Poke shared memory worker threads are waiting on, once per frame.
 (function advanceTick() {
-	if (Atomics.compareExchange(world.workersRunning, 0, 0, availableCores) === 0) {
+	if (
+		!Atomics.load(world.lock, 0) &&
+		Atomics.compareExchange(world.workersRunning, 0, 0, availableCores) === 0
+	) {
 		Atomics.add(world.tick, 0, 1n)
 		Atomics.notify(world.tick, 0)
 		//console.log('incremented frame')

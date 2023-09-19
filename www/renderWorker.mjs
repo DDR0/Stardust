@@ -1,5 +1,5 @@
 import {colour as flip} from './colour.mjs'
-import {summonParticle, indexOf} from './particles.mjs'
+import {setWorld, summonParticle, indexOf} from './particles.mjs'
 
 const useAtomicFrees = false;
 
@@ -9,7 +9,10 @@ let world
 const callbacks = {
 	__proto__: null,
 	hello: ()=>{console.log('render worker hello')},
-	bindToData: new_world => {world = new_world},
+	bindToData: new_world => {
+		world = new_world
+		setWorld(world)
+	},
 }
 
 addEventListener("message", ({'data': {type, data}}) => {

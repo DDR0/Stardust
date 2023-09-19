@@ -1,5 +1,5 @@
 import {colour as flip} from './colour.mjs'
-import {processParticle} from './particles.mjs'
+import {setWorld, processParticle} from './particles.mjs'
 
 let thisWorkerIndex, totalWorkers, thisWorkerID, world
 
@@ -15,6 +15,7 @@ const callbacks = Object.freeze({
 		totalWorkers = _totalWorkers
 		thisWorkerID = _thisWorkerIndex + 1
 		world = _world
+		setWorld(_world)
 		
 		console.log(`Logic worker ${thisWorkerID}/${totalWorkers} started.`)
 		processFrame()
@@ -79,7 +80,8 @@ function processFrame() {
 			if (y + delta < 0 || y + delta >= worldY) { //We're off the end of a column too.
 				if (iterCounter >= iterationLimit) {
 					console.warn(`Iteration limit ${iterationLimit} exceeded by ${thisWorkerID} at ${x},${y}.`)
-					break
+					debugger
+					//break
 				}
 				if (!didProcessParticle) { //Nothing happened this iteration.
 					stage++
