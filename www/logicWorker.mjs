@@ -79,7 +79,7 @@ function processFrame() {
 		if (x + delta < 0 || x + delta >= worldX) { //OK, we're off the end of a row.
 			if (y + delta < 0 || y + delta >= worldY) { //We're off the end of a column too.
 				if (iterCounter >= iterationLimit) {
-					console.warn(`Iteration limit ${iterationLimit} exceeded by ${thisWorkerID} at ${x},${y}.`)
+					console.warn(`Iteration limit ${iterationLimit} reached by worker ${thisWorkerID} at ${x},${y}.`)
 					debugger
 					//break
 				}
