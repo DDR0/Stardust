@@ -3,7 +3,7 @@ import {rng} from './rng.mjs'
 
 const debug = true
 const overwrite = false
-const useAtomicFrees = false;
+const useAtomicFrees = true;
 
 const tr=str=>str; //TODO, translate?
 
