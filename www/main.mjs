@@ -34,45 +34,73 @@ const maxScreenRes = Object.freeze({ x: 3840, y: 2160 }) //4k resolution, probab
 const totalPixels = maxScreenRes.x * maxScreenRes.y
 const renderBuffer = new Uint8Array(new SharedArrayBuffer(totalPixels * Uint8Array.BYTES_PER_ELEMENT * 3)) //rgb triplets (no a?) - drawn to canvas to render the game
 
-//Could use a double-buffer system, but we would have to copy everything from one buffer to the other each frame. Benefit: no tearing.
-const world = Object.freeze({
-	__proto__: null,
-	lock:              new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)), //Global lock for all world data, so we can resize the world. Also acts as a "pause" button. Bool, but atomic operations like i32.
-	tick:              new BigInt64Array (new SharedArrayBuffer(1           * BigInt64Array .BYTES_PER_ELEMENT)), //Current global tick.
-	workersRunning:    new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)), //Used by workers, last one to finish increments tick.
-	 
-	bounds: Object.seal({ 
+const world = (()=>{
+	const world = Object.seal({
 		__proto__: null,
-		x:             new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)), 
-		y:             new Int32Array    (new SharedArrayBuffer(1           * Int32Array    .BYTES_PER_ELEMENT)),
-	}),
-	wrappingBehaviour: new Uint8Array    (new SharedArrayBuffer(4           * Uint8Array    .BYTES_PER_ELEMENT)), //top, left, bottom, right: Set to particle type 0 or 1.
-	
-	particles: Object.freeze({
-		__proto__: null,
-		lock:          new Int32Array    (new SharedArrayBuffer(totalPixels * Int32Array    .BYTES_PER_ELEMENT)), //Is this particle locked for processing? 0=no, >0 = logic worker, -1 = main thread, -2 = render worker
-		type:          new Uint8Array    (new SharedArrayBuffer(totalPixels * Uint8Array    .BYTES_PER_ELEMENT)),
-		tick:          new BigInt64Array (new SharedArrayBuffer(totalPixels * BigInt64Array .BYTES_PER_ELEMENT)), //Last tick the particle was processed on. Used for refilling initiatiave.
-		initiative:    new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)), //Faster particles spend less initiative moving around. When a particle is out of initiatiave, it stops moving.
-		abgr:          new Uint32Array   (new SharedArrayBuffer(totalPixels * Uint32Array   .BYTES_PER_ELEMENT)),
-		velocity: Object.freeze({
+		lock:              [Int32Array    , 1          ], //Global lock for all world data, so we can resize the world. Also acts as a "pause" button. Bool, but atomic operations like i32.
+		tick:              [BigInt64Array , 1          ], //Current global tick.
+		workersRunning:    [Int32Array    , 1          ], //Used by workers, last one to finish increments tick.
+		 
+		bounds: Object.seal({ 
 			__proto__: null,
-			x:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
-			y:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
+			x:             [Int32Array    , 1          ], 
+			y:             [Int32Array    , 1          ],
 		}),
-		subpixelPosition: Object.freeze({ 
+		wrappingBehaviour: [Uint8Array    , 4          ], //top, left, bottom, right: Set to particle type 0 or 1.
+		
+		particles: Object.seal({
 			__proto__: null,
-			x:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)), //Position comes in through x/y coordinate on screen, but this does not capture subpixel position for slow-moving particles.
-			y:         new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
-		}),
-		mass:          new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)),
-		temperature:   new Float32Array  (new SharedArrayBuffer(totalPixels * Float32Array  .BYTES_PER_ELEMENT)), //Kelvin
-		scratch1:      new BigUint64Array(new SharedArrayBuffer(totalPixels * BigUint64Array.BYTES_PER_ELEMENT)), //internal state for the particle
-		scratch2:      new BigUint64Array(new SharedArrayBuffer(totalPixels * BigUint64Array.BYTES_PER_ELEMENT)),
+			lock:          [Int32Array    , totalPixels], //Is this particle locked for processing? 0=no, >0 = logic worker, -1 = main thread, -2 = render worker
+			type:          [Uint8Array    , totalPixels],
+			tick:          [BigInt64Array , totalPixels], //Last tick the particle was processed on. Used for refilling initiatiave.
+			initiative:    [Float32Array  , totalPixels], //Faster particles spend less initiative moving around. When a particle is out of initiatiave, it stops moving.
+			abgr:          [Uint32Array   , totalPixels],
+			velocity: Object.seal({
+				__proto__: null,
+				x:         [Float32Array  , totalPixels],
+				y:         [Float32Array  , totalPixels],
+			}),
+			subpixelPosition: Object.seal({ 
+				__proto__: null,
+				x:         [Float32Array  , totalPixels], //Position comes in through x/y coordinate on screen, but this does not capture subpixel position for slow-moving particles.
+				y:         [Float32Array  , totalPixels],
+			}),
+			mass:          [Float32Array  , totalPixels],
+			temperature:   [Float32Array  , totalPixels], //Kelvin
+			scratch1:      [BigUint64Array, totalPixels], //internal state for the particle
+			scratch2:      [BigUint64Array, totalPixels],
+		})
 	})
-})
+	
+	
+	const walkWorldTree = (obj, hydrator=()=>{}, start=0) =>
+		Object.entries(obj).reduce(
+			(accum, [key, val]) => {
+				if (val instanceof Array) {
+					const [type, entries] = val
+					const entryStartByte = Math.ceil(accum/type.BYTES_PER_ELEMENT) * type.BYTES_PER_ELEMENT //Align access for 2- and 4-byte types.
+					hydrator(obj, key, type, entryStartByte, entries)
+					return entryStartByte + type.BYTES_PER_ELEMENT * entries
+				} else {
+					return walkWorldTree(val, hydrator, accum)
+				}
+			},
+			start
+		)
+	
+	const memory = Object.freeze(new SharedArrayBuffer(walkWorldTree(world)))
+	Object.freeze(walkWorldTree(world, (obj, key, type, entryStartByte, entries) =>
+		obj[key] = new type(memory, entryStartByte, entries)
+	))
 
-window.world = world //Enable easy script access for debugging.
+	//Enable easy script access for debugging.
+	if (localStorage.devMode) {
+		window.world = world
+		window.memory = memory
+	}
+	
+	return Object.freeze(world);
+})()
 
 Array.prototype.fill.call(world.wrappingBehaviour, 1) //0 is air, 1 is wall. Default to wall. See particles.rs:hydrate_with_data() for the full list.
 
