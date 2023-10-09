@@ -71,10 +71,17 @@ export const bindWorldToDisplay = (world, display, draw) => {
 		
 		updateCanvasRenderer = () => {
 			const {width, height} = mainCanvas
-			//Create a new array of right length, but with a `SharedArrayBuffer` backing it.
-			inputArray = new Uint8ClampedArray(world.particles.abgr.buffer, 0, 4*width*height)
+			
+			//Create a new array of right length, but with the SharedArrayBuffer backing it.
+			inputArray = new Uint8ClampedArray(
+				world.particles.abgr.buffer,
+				world.particles.abgr.byteOffset,
+				4*width*height,
+			)
+			
 			//Create a new array with a non-shared, non-resizable `ArrayBuffer` backing it.
 			outputArray = new Uint8ClampedArray(inputArray.length)
+			
 			//`imageData` sees updates to the `outputArray` data.
 			imageData = new ImageData(outputArray, width, height)
 		}
