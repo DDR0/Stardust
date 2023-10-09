@@ -3,7 +3,7 @@ import {rng} from './rng.mjs'
 
 const debug = true
 const overwrite = false
-const useAtomicFrees = false;
+const useAtomicFrees = true;
 
 const tr=str=>str; //TODO, translate?
 
@@ -23,34 +23,48 @@ const realParticleOperator = Object.freeze({
 			: world.particles.lock[this.i] = 0
 	},
 	
-	get type() { return world.particles.type[this.i] },
-	set type(v) { world.particles.type[this.i] = v },
-	get tick() { return world.particles.tick[this.i] },
-	set tick(v) { world.particles.tick[this.i] = v },
+	get type() { return Atomics.load(world.particles.type, this.i) },
+	set type(v) { Atomics.store(world.particles.type, this.i, v) },
+	get tick() { return Atomics.load(world.particles.tick, this.i) },
+	set tick(v) { Atomics.store(world.particles.tick, this.i, v) },
+	//get initiative() { return Atomics.load(world.particles.initiative, this.i) },
+	//set initiative(v) { Atomics.store(world.particles.initiative, this.i, v) },
 	get initiative() { return world.particles.initiative[this.i] },
 	set initiative(v) { world.particles.initiative[this.i] = v },
-	get abgr() { return world.particles.abgr[this.i] },
-	set abgr(v) { world.particles.abgr[this.i] = v },
+	get abgr() { return Atomics.load(world.particles.abgr, this.i) },
+	set abgr(v) { Atomics.store(world.particles.abgr, this.i, v) },
 	velocity: Object.freeze({ 
+		//get x() { return Atomics.load(world.particles.velocity.x, this.i) },
+		//set x(v) { Atomics.store(world.particles.velocity.x, this.i, v) },
+		//get y() { return Atomics.load(world.particles.velocity.y, this.i) },
+		//set y(v) { Atomics.store(world.particles.velocity.y, this.i, v) },
 		get x() { return world.particles.velocity.x[this.i] },
 		set x(v) { world.particles.velocity.x[this.i] = v },
 		get y() { return world.particles.velocity.y[this.i] },
 		set y(v) { world.particles.velocity.y[this.i] = v },
 	}),
 	subpixelPosition: Object.freeze({
+		//get x() { return Atomics.load(world.particles.subpixelPosition.x, this.i) },
+		//set x(v) { Atomics.store(world.particles.subpixelPosition.x, this.i, v) },
+		//get y() { return Atomics.load(world.particles.subpixelPosition.y, this.i) },
+		//set y(v) { Atomics.store(world.particles.subpixelPosition.y, this.i, v) },
 		get x() { return world.particles.subpixelPosition.x[this.i] },
 		set x(v) { world.particles.subpixelPosition.x[this.i] = v },
 		get y() { return world.particles.subpixelPosition.y[this.i] },
 		set y(v) { world.particles.subpixelPosition.y[this.i] = v },
 	}),
+	//get mass() { return Atomics.load(world.particles.mass, this.i) },
+	//set mass(v) { Atomics.store(world.particles.mass, this.i, v) },
+	//get temperature() { return Atomics.load(world.particles.temperature, this.i) },
+	//set temperature(v) { Atomics.store(world.particles.temperature, this.i, v) },
 	get mass() { return world.particles.mass[this.i] },
 	set mass(v) { world.particles.mass[this.i] = v },
 	get temperature() { return world.particles.temperature[this.i] },
 	set temperature(v) { world.particles.temperature[this.i] = v },
-	get scratch1() { return world.particles.scratch1[this.i] },
-	set scratch1(v) { world.particles.scratch1[this.i] = v },
-	get scratch2() { return world.particles.scratch2[this.i] },
-	set scratch2(v) { world.particles.scratch2[this.i] = v },
+	get scratch1() { return Atomics.load(world.particles.scratch1, this.i) },
+	set scratch1(v) { Atomics.store(world.particles.scratch1, this.i, v) },
+	get scratch2() { return Atomics.load(world.particles.scratch2, this.i) },
+	set scratch2(v) { Atomics.store(world.particles.scratch2, this.i, v) },
 })
 
 //A heap-allocated particle, outside the grid.
